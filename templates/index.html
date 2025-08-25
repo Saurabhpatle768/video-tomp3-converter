@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video to MP3 Converter</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>🎵 Video to MP3 Converter</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+  <div id="dropArea">
+    <p>Drag & Drop your video here or</p>
+    <input type="file" name="file" id="fileInput" accept="video/*" required>
+    <button type="submit">Convert To Mp3</button>
+  </div>
+</form>
+
+
+    <div id="progressSection">
+      <p>Upload Progress</p>
+      <progress id="uploadProgress" value="0" max="100"></progress>
+      <span id="uploadPercent">0%</span>
+
+      <p>Conversion Progress</p>
+      <progress id="convertProgress" value="0" max="100"></progress>
+      <span id="convertPercent">0%</span>
+    </div>
+
+    <div id="downloadLink"></div>
+  </div>
+
+<footer style="background:#111; color:#fff; padding:20px; text-align:center; font-size:14px;">
+  <p>&copy; 2025 Video2MP3 Converter | All Rights Reserved.</p>
+  
+  <div style="margin-top:15px; max-width:900px; margin-left:auto; margin-right:auto; text-align:left;">
+    <h3 style="color:#f39c12; margin-bottom:10px;">Terms of Service & Disclaimer</h3>
+    <p><strong>Effective Date:</strong> 25/08/2025</p>
+    <p>
+      Welcome to <strong>Video2MP3 Converter</strong> By accessing or using our website and services, you agree to comply with and be bound by the following Terms of Service and Disclaimer. If you do not agree, please do not use our website.
+    </p>
+    
+    <h4 style="color:#e67e22; margin-top:15px;"> Copyright Responsibility</h4>
+    <p>
+      - We do not host, share, or distribute any copyrighted material. <br>
+      - All content you convert using our tool remains your responsibility. By using our service, you confirm that you either own the rights to the content or have permission from the rightful owner. <br>
+      - We are not responsible for any misuse of this service, including copyright violations.
+    </p>
+  </div>
+</footer>
+
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    const uploadProgress = document.getElementById("uploadProgress");
+    const uploadPercent = document.getElementById("uploadPercent");
+    const convertProgress = document.getElementById("convertProgress");
+    const convertPercent = document.getElementById("convertPercent");
+    const downloadLink = document.getElementById("downloadLink");
+
+    form.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const file = document.getElementById("fileInput").files[0];
+      if (!file) return;
+
+      let formData = new FormData();
+      formData.append("file", file);
+
+      let xhr = new XMLHttpRequest();
+      xhr.open("POST", "/upload", true);
+
+      // Upload progress
+      xhr.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+          let percent = (e.loaded / e.total) * 100;
+          uploadProgress.value = percent;
+          uploadPercent.innerText = Math.round(percent) + "%";
+        }
+      };
+
+      xhr.onload = function() {
+        if (xhr.status == 200) {
+          // Simulate conversion progress
+          let progress = 0;
+          let interval = setInterval(() => {
+            progress += 20;
+            convertProgress.value = progress;
+            convertPercent.innerText = progress + "%";
+            if (progress >= 100) {
+              clearInterval(interval);
+              let response = JSON.parse(xhr.responseText);
+              downloadLink.innerHTML = `<a href="${response.download_url}" class="download-btn">Download MP3</a>`;
+            }
+          }, 400);
+        }
+      };
+
+      xhr.send(formData);
+    });
+      const dropArea = document.getElementById("dropArea");
+  const fileInput = document.getElementById("fileInput");
+
+  // Highlight area on drag
+  dropArea.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropArea.classList.add("dragover");
+  });
+
+  // Remove highlight when leaving
+  dropArea.addEventListener("dragleave", () => {
+    dropArea.classList.remove("dragover");
+  });
+
+  // Handle file drop
+  dropArea.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropArea.classList.remove("dragover");
+
+    if (e.dataTransfer.files.length > 0) {
+      fileInput.files = e.dataTransfer.files; // Assign dropped file to input
+    }
+  });
+  downloadLink.textContent = ""; 
+let a = document.createElement("a");
+a.href = response.download_url;
+a.textContent = "Download MP3";
+a.classList.add("download-btn");
+downloadLink.appendChild(a);
+  </script>
+</body>
+</html>

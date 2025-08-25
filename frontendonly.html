@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video to MP3 Converter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+      background: #f5f5f5;
+    }
+    h2 {
+      color: #333;
+    }
+    input, button {
+      margin: 15px;
+      padding: 10px 15px;
+      font-size: 16px;
+    }
+    .progress-container {
+      margin: 20px auto;
+      width: 60%;
+      background: #ddd;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 20px;
+      width: 0%;
+      background: #4caf50;
+      text-align: center;
+      color: white;
+      line-height: 20px;
+      transition: width 0.3s;
+    }
+    #downloadLink {
+      display: none;
+      margin-top: 20px;
+      font-size: 18px;
+      color: blue;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎵 Video to MP3 Converter (Frontend Only)</h2>
+  
+  <!-- File input -->
+  <input type="file" id="uploader" accept="video/*">
+  <br>
+  <button id="convertBtn">Convert to MP3</button>
+
+  <!-- Upload Progress -->
+  <h3>📂 Upload Progress</h3>
+  <div class="progress-container">
+    <div id="uploadProgress" class="progress-bar">0%</div>
+  </div>
+
+  <!-- Conversion Progress -->
+  <h3>⚙️ Conversion Progress</h3>
+  <div class="progress-container">
+    <div id="convertProgress" class="progress-bar">0%</div>
+  </div>
+
+  <!-- Status -->
+  <p id="status"></p>
+  <a id="downloadLink">⬇️ Download MP3</a>
+
+  <!-- FFmpeg.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.6/dist/ffmpeg.min.js"></script>
+  <script>
+    const { createFFmpeg, fetchFile } = FFmpeg;
+    const ffmpeg = createFFmpeg({ log: true });
+
+    const uploadBar = document.getElementById("uploadProgress");
+    const convertBar = document.getElementById("convertProgress");
+
+    // Show file "upload" progress (simulated because it's local)
+    document.getElementById("uploader").addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      let uploaded = 0;
+      const step = file.size / 100;
+
+      // Fake upload progress (reading file locally)
+      const interval = setInterval(() => {
+        uploaded += step;
+        let percent = Math.min((uploaded / file.size) * 100, 100);
+        uploadBar.style.width = percent + "%";
+        uploadBar.innerText = Math.floor(percent) + "%";
+
+        if (percent >= 100) clearInterval(interval);
+      }, 30);
+    });
+
+    // Convert video → MP3
+    document.getElementById("convertBtn").onclick = async () => {
+      const file = document.getElementById("uploader").files[0];
+      if (!file) return alert("Please select a video first!");
+
+      document.getElementById("status").innerText = "⏳ Loading FFmpeg...";
+      await ffmpeg.load();
+
+      // Track conversion progress from FFmpeg logs
+      ffmpeg.setLogger(({ message }) => {
+        if (message.includes("time=")) {
+          // Rough % progress estimate
+          convertBar.style.width = "50%";
+          convertBar.innerText = "50%";
+        }
+      });
+
+      document.getElementById("status").innerText = "⚙️ Converting...";
+      ffmpeg.FS("writeFile", "input.mp4", await fetchFile(file));
+      await ffmpeg.run("-i", "input.mp4", "output.mp3");
+
+      // Mark as 100% when finished
+      convertBar.style.width = "100%";
+      convertBar.innerText = "100%";
+
+      const data = ffmpeg.FS("readFile", "output.mp3");
+      const url = URL.createObjectURL(new Blob([data.buffer], { type: "audio/mp3" }));
+
+      const downloadLink = document.getElementById("downloadLink");
+      downloadLink.href = url;
+      downloadLink.download = "converted.mp3";
+      downloadLink.style.display = "block";
+
+      document.getElementById("status").innerText = "✅ Conversion Complete!";
+    };
+  </script>
+</body>
+</html>
